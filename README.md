@@ -1,4 +1,11 @@
-# gong-cli
+<div align="center">
+  <h1>gong-cli</h1>
+  <p>
+    <a href="https://www.npmjs.com/package/@oztamir/gong-cli">
+      <img alt="npm package" src="https://img.shields.io/npm/v/%40oztamir%2Fgong-cli?logo=npm&label=npm&color=cb3837">
+    </a>
+  </p>
+</div>
 
 A command-line client for the [Gong API](https://gong.app.gong.io/settings/api/documentation).
 Covers every documented API operation.
@@ -8,9 +15,6 @@ npm install -g @oztamir/gong-cli
 gong auth check
 gong calls list --from 2026-06-01 --to 2026-07-01
 ```
-
-Requires Node.js 22+. Until the package is published to npm, install from a checkout
-with `npm install && npm link`.
 
 ## Authentication
 

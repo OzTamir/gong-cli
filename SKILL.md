@@ -24,8 +24,7 @@ patterns agents need; `--help` on any command is authoritative and links to Gong
 ## Prerequisites
 
 The CLI must be installed (`gong --version`) — install with `npm install -g @oztamir/gong-cli`
-or run via `npx @oztamir/gong-cli` (from a repo checkout before it is published to npm:
-`npm install && npm link`).
+or run via `npx @oztamir/gong-cli`.
 
 Credentials must already be configured (any one of):
 
