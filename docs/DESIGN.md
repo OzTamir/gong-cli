@@ -250,8 +250,8 @@ with `--all` it prints the first request only (later cursors are unknowable offl
 
 ## API quirks the CLI absorbs
 
-Findings from the official spec that shape implementation (details per group live in the
-research extracts and Gong's docs):
+Findings from the official spec that shape implementation (full operation details live in
+`reference/gong-openapi.json` and Gong's docs):
 
 - **GET with a JSON body**: `GET /v2/crm/entities` requires `objectsCrmIds` as a JSON array in
   the *request body* (per Gong's own description; the machine spec claims a query param) —

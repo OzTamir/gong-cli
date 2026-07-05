@@ -3,7 +3,7 @@
  * individual users' call access (get, grant, revoke).
  * API semantics: https://gong.app.gong.io/settings/api/documentation#tag--Permissions
  *
- * Lane quirks (see docs/DESIGN.md and the vendored spec):
+ * API quirks (see docs/DESIGN.md and the vendored spec):
  *  - No operation in this group paginates; list-shaped responses arrive whole.
  *  - `POST /v2/calls/users-access` is a *read* (filter travels in the body);
  *    PUT grants and DELETE revokes on the same path — DELETE carries a JSON body.

@@ -1,131 +1,86 @@
 # gong-cli
 
-A command-line client for the [Gong API](https://gong.app.gong.io/settings/api/documentation),
-built for humans **and** agents. Every documented public Gong API operation is reachable;
-output is pipe-friendly; errors and pagination are machine-readable.
+A command-line client for the [Gong API](https://gong.app.gong.io/settings/api/documentation).
+Covers every documented API operation.
 
 ```bash
-npm install -g @oztamir/gong-cli    # or: npx @oztamir/gong-cli
+npm install -g @oztamir/gong-cli
 gong auth check
 gong calls list --from 2026-06-01 --to 2026-07-01
 ```
 
-Not yet published to npm — until then, run from a checkout: `npm install && npm link`
-(or `npx .` inside the repo). Requires Node.js >= 22.
+Requires Node.js 22+. Until the package is published to npm, install from a checkout
+with `npm install && npm link`.
 
 ## Authentication
 
-Create an access key + secret on Gong's API settings page (technical administrators only),
-then provide credentials via any of (highest precedence first):
+Create an access key and secret on Gong's API settings page, then use any of
+(highest precedence first):
 
-| Source | How |
+| Source | |
 |---|---|
-| Flags | `--access-key <key> --access-key-secret <secret>` (or `--bearer-token <token>`) |
-| Environment | `GONG_ACCESS_KEY` + `GONG_ACCESS_KEY_SECRET` (or `GONG_BEARER_TOKEN`) |
-| Config file | `gong config set access-key <key>` etc. → `~/.config/gong/config.json` |
+| Flags | `--access-key`, `--access-key-secret`, `--bearer-token` |
+| Environment | `GONG_ACCESS_KEY`, `GONG_ACCESS_KEY_SECRET`, `GONG_BEARER_TOKEN` |
+| Config file | `gong config set access-key <key>` → `~/.config/gong/config.json` |
 
-Prefer env vars or the config file — secret-bearing flags end up in shell history.
-A bearer token (from [Gong's OAuth flow](https://gong.app.gong.io/settings/api/documentation#overview))
-wins over key+secret; OAuth apps must also set the `api_base_url_for_customer` they receive
-as the base URL (`GONG_BASE_URL` or `gong config set base-url …`). `gong auth check`
-verifies whatever is configured with one cheap API call.
+`gong auth check` verifies credentials with a single API call. OAuth users pass their
+token via `--bearer-token`/`GONG_BEARER_TOKEN` and set the base URL Gong issued them
+(`GONG_BASE_URL` or `gong config set base-url`).
 
 ## Commands
 
-Every command maps to a documented Gong API operation (shown in its `--help`, which also
-links to the relevant [Gong API docs](https://gong.app.gong.io/settings/api/documentation)
-section — API semantics live there, not here).
-
-| Group | Commands |
-|---|---|
-| `gong calls` | `list` · `get <id>` · `search` · `transcript` · `create` · `upload-media <id>` |
-| `gong users` | `list` · `get <id>` · `history <id>` · `search` |
-| `gong coaching` | `list` |
-| `gong stats` | `activity aggregate` · `activity by-period` · `activity day-by-day` · `activity scorecards` · `interaction` |
-| `gong crm` | `integrations get\|register\|delete` · `objects get\|upload` · `schema list\|upload` · `request-status <id>` |
-| `gong flows` | `list` · `folders` · `steps` · `prospects list\|assign\|unassign\|bulk-assign\|bulk-assign-status <id>` |
-| `gong permissions` | `profiles list\|get <id>\|create\|update <id>\|users <id>` · `call-access get\|grant\|revoke` |
-| `gong library` | `folders` · `folder-calls` |
-| `gong settings` | `scorecards` · `trackers` · `briefs` |
-| `gong workspaces` | `list` |
-| `gong outcomes` | `list` |
-| `gong privacy` | `for-email <email>` · `for-phone <phone>` · `purge-email <email>` · `purge-phone <phone>` |
-| `gong logs` | `list` |
-| `gong meetings` | `create` · `update <id>` · `delete <id>` · `integration-status` (beta) |
-| `gong tasks` | `list` · `update <id>` |
-| `gong entities` | `ask` · `brief` (AI, consumes Gong credits) |
-| `gong interactions` | `create` |
-| `gong engagement` | `content-viewed` · `content-shared` · `custom-action` (legacy) |
-| `gong integration-settings` | `set` |
-| `gong auth` / `gong config` | `check` / `set\|get\|unset\|list\|path` |
-
-## Output
-
-`-o, --output <json|jsonl|table|raw>`. Lists render a table on a TTY and JSON when piped;
-explicit `-o` always wins. `jsonl` streams one record per line. `raw` prints the exact
-response body byte-for-byte. `--fields a.b,c` projects records to those dot-paths.
-
-All formats preserve Gong's int64 IDs exactly (no JavaScript number corruption).
-
-stdout is data only. Diagnostics go to stderr — as single-line JSON when stderr is piped:
-
-```
-{"gongCliMeta":true,"nextCursor":"…","totalRecords":263,"fetchedRecords":100,"pages":1}
-{"error":true,"httpStatus":404,"requestId":"…","errors":["…"],"exitCode":4,"message":"…"}
+```text
+calls        list · get · search · transcript · create · upload-media
+users        list · get · history · search
+stats        activity aggregate|by-period|day-by-day|scorecards · interaction
+crm          integrations · objects · schema · request-status
+flows        list · folders · steps · prospects …
+permissions  profiles … · call-access …
+library      folders · folder-calls
+settings     scorecards · trackers · briefs
+privacy      for-email · for-phone · purge-email · purge-phone
+meetings     create · update · delete · integration-status
+tasks        list · update
+entities     ask · brief
+coaching · workspaces · outcomes · logs · interactions · engagement · integration-settings
+auth check · config
 ```
 
-Exit codes: `0` ok · `1` API/unexpected error · `2` usage · `3` auth · `4` not found ·
-`5` rate-limited after retries.
+Every command maps to one documented API operation; its `--help` shows the mapping,
+every available flag, examples, and a link to the relevant section of Gong's API
+reference. API semantics live in Gong's docs, not here.
 
-## Pagination
+## Scripting
 
-Cursor-paginated commands fetch one page (~100 records) by default; the stderr meta line
-carries the next cursor. `--all` follows cursors to the end, `--limit <n>` stops after n
-records (crossing pages), `--cursor <c>` resumes. Aborted runs emit the resume cursor.
+- `-o json|jsonl|table|raw` — lists render a table on a TTY and JSON when piped;
+  `raw` is the exact response body. `--fields a.b,c` projects records. Int64 IDs are
+  preserved exactly in every format.
+- stdout carries data only. When stderr is piped, diagnostics are single-line JSON:
+  pagination meta (`{"gongCliMeta":true,"nextCursor":…}`) and errors
+  (`{"error":true,"httpStatus":…,"requestId":…}`).
+- Paginated commands fetch one page by default; `--all` follows cursors to the end,
+  `--limit <n>` stops after n records, `--cursor <c>` resumes.
+- Body-taking commands accept the full request body via `--body <json>` or
+  `--body-file <path|->`; typed flags merge over it.
+- `--dry-run` prints the request without sending it. `--yes` confirms destructive
+  commands non-interactively; without it they refuse when stdin is not a TTY.
+- Exit codes: `0` ok · `1` API error · `2` usage · `3` auth · `4` not found ·
+  `5` rate-limited after retries. 429s are retried automatically per `Retry-After`.
 
-## Request bodies
+## Agent skill
 
-Every documented API field has a flag (its help text names the mapped field). Body-taking
-commands also accept `--body '<json>'` / `--body-file <path|->` with the full request body;
-typed flags merge over it (objects deep-merge, arrays/scalars replace). `--dry-run` prints
-the exact request without sending — works on every command.
-
-```bash
-gong calls search --from 2026-06-01 --to 2026-07-01 --parties --trackers -o jsonl --all
-gong calls search --body-file query.json -o json
-gong calls transcript --call-ids 7782342274025937895 --dry-run
-```
-
-Dates: ISO-8601 passes through; bare `YYYY-MM-DD` on date-time fields expands to UTC
-midnight. Gong ranges are half-open: `from` inclusive, `to` exclusive.
-
-## Safety and limits
-
-- Destructive commands (`privacy purge-*`, `meetings delete`, `crm integrations delete`,
-  `permissions call-access revoke`) prompt on a TTY and require `--yes` when piped.
-  Purges are irreversible. (`--dry-run` skips the prompt — nothing is sent.)
-- Gong's default limits are 3 calls/sec and 10,000 calls/day; 429s are retried
-  automatically honoring `Retry-After` (`--no-retry` disables).
-- `flows`/`tasks` need a Gong Engage license; `meetings` endpoints are beta/limited
-  release; `entities ask|brief` consume Gong credits.
-
-## For agents
-
-`SKILL.md` at the repo root is an [Agent Skill](https://agentskills.io) for this CLI —
-install it with `npx skills add oztamir/gong-cli`.
+`SKILL.md` at the repo root is an [Agent Skill](https://agentskills.io) for this CLI:
+`npx skills add oztamir/gong-cli`.
 
 ## Development
 
 ```bash
-npm install        # also builds (prepare)
-npm test           # vitest, mocked HTTP only — never calls the live API
-npm run typecheck
-npm run build
-npm link           # then: gong --help
+npm install && npm test    # vitest against mocked HTTP; never calls the live API
 ```
 
-Architecture, conventions, and how to keep the CLI in sync with Gong's API surface:
-[docs/DESIGN.md](docs/DESIGN.md) and [docs/MAINTAINING.md](docs/MAINTAINING.md).
+See [docs/DESIGN.md](docs/DESIGN.md) for CLI conventions and
+[docs/MAINTAINING.md](docs/MAINTAINING.md) for architecture and how to track Gong API
+changes.
 
 ## License
 

@@ -1,5 +1,5 @@
 /**
- * Lane tests: gong interactions create, gong engagement content-viewed|content-shared|
+ * Tests for gong interactions create, gong engagement content-viewed|content-shared|
  * custom-action, gong integration-settings set. All five operations are body-only,
  * single-shot writes (no query/path params, no pagination, none destructive).
  */
