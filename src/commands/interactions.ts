@@ -10,23 +10,11 @@ import { makeClient, outputFlags } from '../program.js';
 import { addBodyOptions, buildBody, hasPath } from '../body.js';
 import type { BodyFlagMap } from '../body.js';
 import { CliError, EXIT } from '../errors.js';
-import { parseLossless } from '../json.js';
 import { getPath } from '../output.js';
 import { runSingle } from '../run.js';
-import { csv, expandDateTime } from '../util.js';
+import { csv, expandDateTime, jsonFlag } from '../util.js';
 
 const DOCS = 'https://gong.app.gong.io/settings/api/documentation';
-
-/** Parse an inline JSON flag value (for structured fields like person or customFields). */
-function jsonFlag(flagName: string): (value: string) => unknown {
-  return (value: string) => {
-    try {
-      return parseLossless(value);
-    } catch {
-      throw new CliError(`${flagName} must be valid JSON.`, { exitCode: EXIT.USAGE });
-    }
-  };
-}
 
 /** Integer flag parser (int32 fields like numeric ranges; zero and negatives allowed). */
 function intFlag(flagName: string): (value: string) => number {

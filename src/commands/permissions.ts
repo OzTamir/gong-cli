@@ -20,24 +20,12 @@ import { makeClient, outputFlags } from '../program.js';
 import { addBodyOptions, buildBody, hasPath } from '../body.js';
 import type { BodyFlagMap } from '../body.js';
 import { CliError, EXIT } from '../errors.js';
-import { parseLossless } from '../json.js';
 import { resolveListFormat } from '../output.js';
 import { runPaginatedList } from '../pagination.js';
 import { runSingle } from '../run.js';
-import { confirmDestructive, csv } from '../util.js';
+import { confirmDestructive, csv, jsonFlag } from '../util.js';
 
 const DOCS = 'https://gong.app.gong.io/settings/api/documentation';
-
-/** Parse an inline JSON flag value (for structured fields like access scopes). */
-function jsonFlag(flagName: string): (value: string) => unknown {
-  return (value: string) => {
-    try {
-      return parseLossless(value);
-    } catch {
-      throw new CliError(`${flagName} must be valid JSON.`, { exitCode: EXIT.USAGE });
-    }
-  };
-}
 
 /** Like jsonFlag, but the value must be a JSON array. */
 function jsonArrayFlag(flagName: string): (value: string) => unknown {

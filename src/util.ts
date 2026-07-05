@@ -5,6 +5,7 @@ import type { Command } from 'commander';
 
 import type { CliContext } from './context.js';
 import { CliError, EXIT } from './errors.js';
+import { parseLossless } from './json.js';
 
 const BARE_DATE = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -27,6 +28,17 @@ export function csv(value: string): string[] {
 /** Repeatable-flag accumulator for commander: `.option(..., collect, [] as string[])`. */
 export function collect(value: string, previous: string[]): string[] {
   return [...previous, value];
+}
+
+/** Parser for flags that take an inline JSON value (structured fields like parties). */
+export function jsonFlag(flagName: string): (value: string) => unknown {
+  return (value: string) => {
+    try {
+      return parseLossless(value);
+    } catch {
+      throw new CliError(`${flagName} must be valid JSON.`, { exitCode: EXIT.USAGE });
+    }
+  };
 }
 
 export function positiveInt(flagName: string): (value: string) => number {

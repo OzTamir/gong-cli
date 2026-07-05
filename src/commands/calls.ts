@@ -9,25 +9,13 @@ import { makeClient, outputFlags } from '../program.js';
 import { addBodyOptions, buildBody, hasPath } from '../body.js';
 import type { BodyFlagMap } from '../body.js';
 import { CliError, EXIT } from '../errors.js';
-import { parseLossless } from '../json.js';
 import { resolveListFormat } from '../output.js';
 import { addPaginationOptions, runPaginatedList } from '../pagination.js';
 import type { PaginationFlags } from '../pagination.js';
 import { runSingle } from '../run.js';
-import { csv, expandDateTime } from '../util.js';
+import { csv, expandDateTime, jsonFlag } from '../util.js';
 
 const DOCS = 'https://gong.app.gong.io/settings/api/documentation';
-
-/** Parse an inline JSON flag value (for structured fields like parties). */
-function jsonFlag(flagName: string): (value: string) => unknown {
-  return (value: string) => {
-    try {
-      return parseLossless(value);
-    } catch {
-      throw new CliError(`${flagName} must be valid JSON.`, { exitCode: EXIT.USAGE });
-    }
-  };
-}
 
 function addTimeRangeOptions(cmd: Command, target: string): Command {
   return cmd
