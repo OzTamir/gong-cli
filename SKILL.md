@@ -8,7 +8,7 @@ description: >-
   wants anything from Gong — "pull a Gong call", "grab that transcript", "who spoke
   on the call", "sales call recording", "export Gong calls", "Gong stats/scorecards",
   "assign prospects to a flow", "purge this email from Gong" — or mentions the Gong
-  API, gong-cli, or a app.gong.io call URL.
+  API, gong-cli, or an app.gong.io call URL.
 license: MIT
 metadata:
   author: oztamir
@@ -24,7 +24,8 @@ patterns agents need; `--help` on any command is authoritative and links to Gong
 ## Prerequisites
 
 The CLI must be installed (`gong --version`) — install with `npm install -g @oztamir/gong-cli`
-or run via `npx @oztamir/gong-cli`.
+or run via `npx @oztamir/gong-cli` (from a repo checkout before it is published to npm:
+`npm install && npm link`).
 
 Credentials must already be configured (any one of):
 

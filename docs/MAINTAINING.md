@@ -11,6 +11,7 @@ src/
   index.ts          bin entry: Node version guard, then runCli
   program.ts        root command, global flags, exit-code mapping; attaches global
                     options to every leaf so they work after subcommands
+  errors.ts         CliError + exit-code constants and stderr error rendering
   context.ts        CliContext — every process/OS touchpoint, injectable for tests
   config.ts         credential resolution (flags > env > config file)
   client.ts         GongClient: auth header, 429 retry, error mapping, multipart,
@@ -26,9 +27,11 @@ tests/
   helpers.ts        runCli harness: real command tree, fake fetch/stdio/home
   core-*.test.ts    scaffold behavior (auth, client, output, pagination, config)
   <group>.test.ts   per-group request construction, pagination, output, errors
+                    (small groups share a file, e.g. users-coaching.test.ts)
 reference/
   gong-openapi.json vendored official spec (see reference/README.md for refresh steps)
   operations.md     generated inventory of all 67 documented operations
+  generate-operations.mjs  regenerates operations.md from the spec
 ```
 
 Command groups never import each other; each `commands/<group>.ts` exports one
@@ -71,9 +74,8 @@ The vendored spec is the source of truth for coverage audits:
 
 1. Re-download: `curl 'https://gong.app.gong.io/ajax/settings/api/documentation/specs?version=' -o reference/gong-openapi.json`
    then pretty-print (`python3 -m json.tool`). This is the spec behind Gong's own docs page.
-2. Diff against the previous version; regenerate `reference/operations.md`
-   (the generation snippet is in `reference/README.md`'s history — any script that walks
-   `paths` and emits `tag | method | path | operationId` rows).
+2. Diff against the previous version; regenerate the inventory:
+   `node reference/generate-operations.mjs <fetch-date>`.
 3. For each new/changed operation, walk its parameters and request-body schema and
    check the CLI exposes them (flags or `--body`). New operations get a command per the
    DESIGN.md grammar; removed ones get a deprecation note in help before deletion.
