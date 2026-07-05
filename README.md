@@ -13,7 +13,28 @@ Covers every documented API operation.
 ```bash
 npm install -g @oztamir/gong-cli
 gong auth check
+
+# or run without installing
+npx @oztamir/gong-cli calls list --from 2026-06-01 --to 2026-07-01
+```
+
+## Examples
+
+```bash
+# calls from the last month, as a table
 gong calls list --from 2026-06-01 --to 2026-07-01
+
+# every June transcript, streamed as JSONL
+gong calls transcript --from 2026-06-01 --to 2026-07-01 --all -o jsonl
+
+# rich data for one call: participants, topics, trackers
+gong calls search --call-ids 7782342274025937895 --parties --topics --trackers
+
+# look up users, picking fields
+gong users list -o json --fields id,emailAddress,firstName,lastName
+
+# preview any request without sending it
+gong stats activity aggregate --from 2026-06-01 --to 2026-06-30 --dry-run
 ```
 
 ## Authentication
@@ -33,58 +54,47 @@ token via `--bearer-token`/`GONG_BEARER_TOKEN` and set the base URL Gong issued 
 
 ## Commands
 
-```text
-calls        list · get · search · transcript · create · upload-media
-users        list · get · history · search
-stats        activity aggregate|by-period|day-by-day|scorecards · interaction
-crm          integrations · objects · schema · request-status
-flows        list · folders · steps · prospects …
-permissions  profiles … · call-access …
-library      folders · folder-calls
-settings     scorecards · trackers · briefs
-privacy      for-email · for-phone · purge-email · purge-phone
-meetings     create · update · delete · integration-status
-tasks        list · update
-entities     ask · brief
-coaching · workspaces · outcomes · logs · interactions · engagement · integration-settings
-auth check · config
-```
+| Group | Commands |
+|---|---|
+| `calls` | `list` · `get` · `search` · `transcript` · `create` · `upload-media` |
+| `users` | `list` · `get` · `history` · `search` |
+| `coaching` | `list` |
+| `stats` | `activity aggregate` · `activity by-period` · `activity day-by-day` · `activity scorecards` · `interaction` |
+| `crm` | `integrations get\|register\|delete` · `objects get\|upload` · `schema list\|upload` · `request-status` |
+| `flows` | `list` · `folders` · `steps` · `prospects list\|assign\|unassign\|bulk-assign\|bulk-assign-status` |
+| `permissions` | `profiles list\|get\|create\|update\|users` · `call-access get\|grant\|revoke` |
+| `library` | `folders` · `folder-calls` |
+| `settings` | `scorecards` · `trackers` · `briefs` |
+| `workspaces` | `list` |
+| `outcomes` | `list` |
+| `privacy` | `for-email` · `for-phone` · `purge-email` · `purge-phone` |
+| `logs` | `list` |
+| `meetings` | `create` · `update` · `delete` · `integration-status` |
+| `tasks` | `list` · `update` |
+| `entities` | `ask` · `brief` |
+| `interactions` | `create` |
+| `engagement` | `content-viewed` · `content-shared` · `custom-action` |
+| `integration-settings` | `set` |
+| `auth` / `config` | `check` / `set` · `get` · `unset` · `list` · `path` |
 
 Every command maps to one documented API operation; its `--help` shows the mapping,
 every available flag, examples, and a link to the relevant section of Gong's API
 reference. API semantics live in Gong's docs, not here.
 
-## Scripting
+## Documentation
 
-- `-o json|jsonl|table|raw` — lists render a table on a TTY and JSON when piped;
-  `raw` is the exact response body. `--fields a.b,c` projects records. Int64 IDs are
-  preserved exactly in every format.
-- stdout carries data only. When stderr is piped, diagnostics are single-line JSON:
-  pagination meta (`{"gongCliMeta":true,"nextCursor":…}`) and errors
-  (`{"error":true,"httpStatus":…,"requestId":…}`).
-- Paginated commands fetch one page by default; `--all` follows cursors to the end,
-  `--limit <n>` stops after n records, `--cursor <c>` resumes.
-- Body-taking commands accept the full request body via `--body <json>` or
-  `--body-file <path|->`; typed flags merge over it.
-- `--dry-run` prints the request without sending it. `--yes` confirms destructive
-  commands non-interactively; without it they refuse when stdin is not a TTY.
-- Exit codes: `0` ok · `1` API error · `2` usage · `3` auth · `4` not found ·
-  `5` rate-limited after retries. 429s are retried automatically per `Retry-After`.
-
-## Agent skill
-
-`SKILL.md` at the repo root is an [Agent Skill](https://agentskills.io) for this CLI:
-`npx skills add oztamir/gong-cli`.
+| | |
+|---|---|
+| [docs/SCRIPTING.md](docs/SCRIPTING.md) | Output formats, machine-readable diagnostics, pagination, request bodies, exit codes |
+| [docs/DESIGN.md](docs/DESIGN.md) | CLI conventions and design decisions |
+| [docs/MAINTAINING.md](docs/MAINTAINING.md) | Architecture and tracking Gong API changes |
+| [SKILL.md](SKILL.md) | Agent Skill for this CLI — `npx skills add oztamir/gong-cli` |
 
 ## Development
 
 ```bash
 npm install && npm test    # vitest against mocked HTTP; never calls the live API
 ```
-
-See [docs/DESIGN.md](docs/DESIGN.md) for CLI conventions and
-[docs/MAINTAINING.md](docs/MAINTAINING.md) for architecture and how to track Gong API
-changes.
 
 ## License
 
