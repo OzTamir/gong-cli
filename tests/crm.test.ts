@@ -32,7 +32,7 @@ describe('gong crm integrations get', () => {
     expect(run.stdout).toContain('5517027188234205706');
   });
 
-  it('has no pagination flags (nothing in this lane paginates)', async () => {
+  it('has no pagination flags (no CRM operation paginates)', async () => {
     const run = await runCli(['crm', 'integrations', 'get', '--all']);
     expect(run.exitCode).toBe(2);
     expect(run.requests).toHaveLength(0);
