@@ -10,7 +10,8 @@ gong auth check
 gong calls list --from 2026-06-01 --to 2026-07-01
 ```
 
-Requires Node.js >= 22.
+Not yet published to npm — until then, run from a checkout: `npm install && npm link`
+(or `npx .` inside the repo). Requires Node.js >= 22.
 
 ## Authentication
 
@@ -102,7 +103,7 @@ midnight. Gong ranges are half-open: `from` inclusive, `to` exclusive.
 
 - Destructive commands (`privacy purge-*`, `meetings delete`, `crm integrations delete`,
   `permissions call-access revoke`) prompt on a TTY and require `--yes` when piped.
-  Purges are irreversible.
+  Purges are irreversible. (`--dry-run` skips the prompt — nothing is sent.)
 - Gong's default limits are 3 calls/sec and 10,000 calls/day; 429s are retried
   automatically honoring `Retry-After` (`--no-retry` disables).
 - `flows`/`tasks` need a Gong Engage license; `meetings` endpoints are beta/limited
