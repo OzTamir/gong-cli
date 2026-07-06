@@ -34,13 +34,17 @@ Credentials must already be configured (any one of):
   `GONG_CONFIG` — every command accepts `--config`)
 - flags: `--access-key`/`--access-key-secret`/`--bearer-token` (avoid: leaks into shell history)
 
-Verify before doing real work:
+**Always run this as your first step, before any other gong command:**
 
 ```bash
 gong auth check          # one cheap API call; exit 0 = credentials work, exit 3 = auth problem
 ```
 
-If it fails with exit 3, ask the user to configure credentials — do not guess keys.
+If it fails with exit 3, stop and tell the user the CLI is not authenticated, pointing them
+at `gong config set access-key …` / `access-key-secret …` or the env vars above. Do not
+guess keys, and **never go looking for credentials yourself** — no scanning `.env` files,
+dotfiles, config directories, or shell history for keys. Configuring credentials is the
+user's job; yours is only to flag that they're missing.
 Companies on a dedicated Gong cell may also need `GONG_BASE_URL` (or `gong config set base-url …`).
 
 ### Secret safety (mandatory)
@@ -94,7 +98,7 @@ carries the cursor to resume from.
 ## Command map
 
 ```text
-calls        list · get <id> · search · transcript · create · upload-media <id>
+calls        list · get <id> · search · transcript · render · create · upload-media <id>
 users        list · get <id> · history <id> · search
 coaching     list
 stats        activity aggregate|by-period|day-by-day|scorecards · interaction
@@ -125,13 +129,34 @@ Recent calls with titles and hosts:
 gong calls list --from 2026-06-28 --to 2026-07-05 -o json --fields id,title,started,primaryUserId
 ```
 
-Full transcript of one call, with speaker identities (two steps — transcripts only carry
-`speakerId`; names come from the parties of `calls search`):
+Full transcript of one call as readable, speaker-labeled Markdown (transcripts only carry
+`speakerId`; names come from the parties of `calls search` — `calls render` does the join,
+timestamps, and topic labels locally, no API call):
 
 ```bash
-gong calls search --call-ids 7782342274025937895 --parties -o json > call.json
 gong calls transcript --call-ids 7782342274025937895 -o json > transcript.json
-# join transcript[].speakerId against call.json parties[].speakerId
+gong calls search --call-ids 7782342274025937895 --parties -o json > parties.json
+gong calls render --transcript transcript.json --parties parties.json --out .
+```
+
+Prefer `calls render` over joining in-context or hand-writing the join — transcripts run
+tens of KB and the Markdown output is what you want to read or hand to the user anyway.
+
+Find calls by participant (don't rely on call titles; filter on the parties themselves):
+
+```bash
+gong calls search --from 2026-06-01 --to 2026-07-01 --parties -o jsonl --all \
+  --fields metaData.id,metaData.title,metaData.started,parties \
+  | grep -i '"<participant-name>' # confirm matches via parties[].name, not the title
+```
+
+Latest call with a person, end to end (search a recent window, take the newest match on
+parties[].name, then transcript + render as above):
+
+```bash
+gong calls search --from 2026-06-01 --to 2026-07-01 --parties -o jsonl --all > calls.jsonl
+# pick the record whose parties[].name matches, with the max metaData.started
+# then run the transcript + `calls render` recipe on its metaData.id
 ```
 
 Rich call data (topics, trackers, brief, outline):

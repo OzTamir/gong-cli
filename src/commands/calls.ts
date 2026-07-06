@@ -1,7 +1,10 @@
 /**
- * `gong calls` — Gong calls: list, get, search (extensive), transcripts, create,
- * upload media. API semantics: https://gong.app.gong.io/settings/api/documentation#tag--Calls
+ * `gong calls` — Gong calls: list, get, search (extensive), transcripts, render,
+ * create, upload media. API semantics: https://gong.app.gong.io/settings/api/documentation#tag--Calls
  */
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import path from 'node:path';
+
 import type { Command } from 'commander';
 
 import type { GroupRegistrar } from '../program.js';
@@ -12,6 +15,8 @@ import { CliError, EXIT } from '../errors.js';
 import { resolveListFormat } from '../output.js';
 import { addPaginationOptions, runPaginatedList } from '../pagination.js';
 import type { PaginationFlags } from '../pagination.js';
+import { buildPartyIndex, renderTranscriptMd, safeFilename, unwrapRecords } from '../render.js';
+import type { ExtensiveCall, TranscriptRecord } from '../render.js';
 import { runSingle } from '../run.js';
 import { csv, expandDateTime, jsonFlag } from '../util.js';
 
@@ -28,7 +33,7 @@ function addTimeRangeOptions(cmd: Command, target: string): Command {
 export const registerCalls: GroupRegistrar = (program, ctx) => {
   const calls = program
     .command('calls')
-    .description('work with Gong calls (list, get, search, transcripts, create, upload media)');
+    .description('work with Gong calls (list, get, search, transcripts, render, create, upload media)');
 
   // ---- gong calls list — GET /v2/calls -------------------------------------------------
   const list = calls
@@ -201,7 +206,7 @@ export const registerCalls: GroupRegistrar = (program, ctx) => {
   transcript
     .addHelpText(
       'after',
-      `\nSpeaker names are not included: resolve transcript speakerId values against\nparties[].speakerId from 'gong calls search --parties'. API docs: ${DOCS}#post-/v2/calls/transcript\n\nExamples:\n  gong calls transcript --call-ids 7782342274025937895\n  gong calls transcript --from 2026-06-01 --to 2026-07-01 --all -o jsonl`,
+      `\nSpeaker names are not included: save this output plus 'gong calls search --parties'\nand join them with 'gong calls render'. API docs: ${DOCS}#post-/v2/calls/transcript\n\nExamples:\n  gong calls transcript --call-ids 7782342274025937895\n  gong calls transcript --from 2026-06-01 --to 2026-07-01 --all -o jsonl`,
     )
     .action(async function (this: Command) {
       const body = (await buildBody(transcript, ctx, TRANSCRIPT_MAP, {
@@ -220,6 +225,51 @@ export const registerCalls: GroupRegistrar = (program, ctx) => {
           columns: ['callId'],
         },
       });
+    });
+
+  // ---- gong calls render — local, no API -----------------------------------------------
+  calls
+    .command('render')
+    .description('render saved transcript JSON to speaker-labeled Markdown (local, no API call)')
+    .requiredOption('--transcript <path>', "output of 'gong calls transcript -o json'")
+    .option('--parties <path>', "output of 'gong calls search --parties -o json' (without it, speakers show as 'Speaker <id>')")
+    .option('--out <dir>', 'output directory for the .md files', '.')
+    .addHelpText(
+      'after',
+      `\nTranscripts key monologues by an opaque speakerId; names come from the parties of\n'gong calls search'. This command does the join and writes one Markdown file per call,\nprinting each written path on stdout. Runs offline — no credentials needed.\n\nExample:\n  gong calls transcript --call-ids 7782342274025937895 -o json > transcript.json\n  gong calls search --call-ids 7782342274025937895 --parties -o json > parties.json\n  gong calls render --transcript transcript.json --parties parties.json --out ./transcripts`,
+    )
+    .action(function (this: Command) {
+      const opts = this.opts<{ transcript: string; parties?: string; out: string }>();
+      const readJson = (filePath: string): unknown => {
+        try {
+          return JSON.parse(readFileSync(filePath, 'utf8'));
+        } catch (err) {
+          throw new CliError(`Could not read JSON from ${filePath}: ${(err as Error).message}`, {
+            exitCode: EXIT.USAGE,
+          });
+        }
+      };
+      const records = unwrapRecords<TranscriptRecord>(readJson(opts.transcript), 'callTranscripts');
+      if (records.length === 0) {
+        throw new CliError(
+          'No transcript records found in the input. (Very recent calls may not be processed by Gong yet.)',
+          { exitCode: EXIT.NOT_FOUND },
+        );
+      }
+      const extensiveCalls = opts.parties
+        ? unwrapRecords<ExtensiveCall>(readJson(opts.parties), 'calls')
+        : [];
+      const { speakerByCall, metaByCall } = buildPartyIndex(extensiveCalls);
+
+      mkdirSync(opts.out, { recursive: true });
+      for (const record of records) {
+        const callId = record.callId;
+        const meta = (callId ? metaByCall.get(callId) : undefined) ?? {};
+        const md = renderTranscriptMd(record, callId ? speakerByCall.get(callId) : undefined, meta);
+        const outPath = path.join(opts.out, safeFilename(callId, meta.title));
+        writeFileSync(outPath, md, 'utf8');
+        ctx.stdout.write(`${outPath}\n`);
+      }
     });
 
   // ---- gong calls create — POST /v2/calls ----------------------------------------------
