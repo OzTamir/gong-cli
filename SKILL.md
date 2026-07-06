@@ -29,7 +29,9 @@ or run via `npx @oztamir/gong-cli`.
 Credentials must already be configured (any one of):
 
 - env: `GONG_ACCESS_KEY` + `GONG_ACCESS_KEY_SECRET` (or `GONG_BEARER_TOKEN`)
-- config file: `gong config set access-key …` / `access-key-secret …` (stored in `~/.config/gong/config.json`)
+- config file: `gong config set access-key …` / `access-key-secret …` (stored in
+  `~/.config/gong/config.json`; a different file can be given with `--config <path>` or
+  `GONG_CONFIG` — every command accepts `--config`)
 - flags: `--access-key`/`--access-key-secret`/`--bearer-token` (avoid: leaks into shell history)
 
 Verify before doing real work:
