@@ -75,6 +75,13 @@ from flags replace wholesale.
   `permissions call-access revoke`) prompt on a TTY; when stdin is piped they refuse with
   exit 2 unless `--yes` is passed. Purges are irreversible.
 
+## Credentials in scripts
+
+Prefer env vars (`GONG_ACCESS_KEY`/`GONG_ACCESS_KEY_SECRET`) or a config file over
+secret-bearing flags, which leak into shell history. A script can pin its own config
+file with `--config <path>` (or `GONG_CONFIG`) — see
+[config.example.json](config.example.json) for the format.
+
 ## Rate limits and retries
 
 Gong's default limits are 3 calls/sec and 10,000 calls/day, company-wide. On 429 the CLI
