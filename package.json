@@ -1,6 +1,6 @@
 {
   "name": "@oztamir/gong-cli",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Command-line client for the Gong API, built for humans and agents",
   "keywords": [
     "gong",
