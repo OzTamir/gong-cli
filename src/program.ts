@@ -19,6 +19,7 @@ export interface GlobalOpts extends OutputFlags {
   accessKeySecret?: string;
   bearerToken?: string;
   baseUrl?: string;
+  config?: string;
   output?: OutputFormat;
   fields?: string[];
   dryRun?: boolean;
@@ -56,6 +57,10 @@ function globalOptions(): Option[] {
     new Option('--access-key-secret <secret>', 'Gong API access key secret (global)'),
     new Option('--bearer-token <token>', 'OAuth Bearer token; wins over key/secret (global)'),
     new Option('--base-url <url>', 'API base URL, default https://api.gong.io (global)'),
+    new Option(
+      '--config <path>',
+      'config file path, default $GONG_CONFIG or ~/.config/gong/config.json (global)',
+    ),
     new Option('-o, --output <format>', 'output format (global)').choices([
       'json',
       'jsonl',

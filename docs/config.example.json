@@ -1,0 +1,5 @@
+{
+  "accessKey": "YOUR_GONG_ACCESS_KEY",
+  "accessKeySecret": "YOUR_GONG_ACCESS_KEY_SECRET",
+  "baseUrl": "https://api.gong.io"
+}

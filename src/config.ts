@@ -23,6 +23,8 @@ export interface AuthFlags {
   accessKeySecret?: string;
   bearerToken?: string;
   baseUrl?: string;
+  /** Explicit config file path (--config); wins over GONG_CONFIG and the default. */
+  config?: string;
 }
 
 export interface ResolvedAuth {
@@ -53,14 +55,15 @@ export function configKeyToProp(key: string): keyof FileConfig {
   return KEY_TO_PROP[key as ConfigKey];
 }
 
-export function configFilePath(ctx: CliContext): string {
+export function configFilePath(ctx: CliContext, override?: string): string {
+  if (override) return override;
   if (ctx.env.GONG_CONFIG) return ctx.env.GONG_CONFIG;
   const configHome = ctx.env.XDG_CONFIG_HOME || path.join(ctx.homedir(), '.config');
   return path.join(configHome, 'gong', 'config.json');
 }
 
-export function loadConfigFile(ctx: CliContext): FileConfig {
-  const file = configFilePath(ctx);
+export function loadConfigFile(ctx: CliContext, override?: string): FileConfig {
+  const file = configFilePath(ctx, override);
   let text: string;
   try {
     text = fs.readFileSync(file, 'utf8');
@@ -81,8 +84,8 @@ export function loadConfigFile(ctx: CliContext): FileConfig {
   }
 }
 
-export function saveConfigFile(ctx: CliContext, config: FileConfig): void {
-  const file = configFilePath(ctx);
+export function saveConfigFile(ctx: CliContext, config: FileConfig, override?: string): void {
+  const file = configFilePath(ctx, override);
   fs.mkdirSync(path.dirname(file), { recursive: true, mode: 0o700 });
   fs.writeFileSync(file, JSON.stringify(config, null, 2) + '\n', { mode: 0o600 });
 }
@@ -100,7 +103,7 @@ const MISSING_CREDENTIALS_HINT = [
  * credential wins outright. Within a source, a bearer token wins over key+secret.
  */
 export function resolveAuth(ctx: CliContext, flags: AuthFlags): ResolvedAuth {
-  const file = loadConfigFile(ctx);
+  const file = loadConfigFile(ctx, flags.config);
   const baseUrl =
     flags.baseUrl ?? ctx.env.GONG_BASE_URL ?? (file.baseUrl || undefined) ?? DEFAULT_BASE_URL;
 

@@ -93,4 +93,36 @@ describe('gong config', () => {
     expect(run.exitCode).toBe(2);
     expect(run.stderr).toContain('not valid JSON');
   });
+
+  it('--config routes reads and writes to the given file', async () => {
+    const altPath = path.join(dir, 'alt.json');
+    const set = await runCli(['config', 'set', 'access-key', 'alt-key', '--config', altPath]);
+    expect(set.exitCode).toBe(0);
+    expect((JSON.parse(fs.readFileSync(altPath, 'utf8')) as Record<string, string>).accessKey).toBe(
+      'alt-key',
+    );
+
+    const shown = await runCli(['config', 'path', '--config', altPath]);
+    expect(shown.stdout.trim()).toBe(altPath);
+  });
+
+  it('--config beats GONG_CONFIG and authenticates requests', async () => {
+    const altPath = path.join(dir, 'alt.json');
+    fs.writeFileSync(
+      altPath,
+      JSON.stringify({ accessKey: 'flag-key', accessKeySecret: 'flag-secret' }),
+    );
+    fs.writeFileSync(
+      configPath,
+      JSON.stringify({ accessKey: 'env-key', accessKeySecret: 'env-secret' }),
+    );
+    const run = await runCli(['auth', 'check', '--config', altPath], {
+      env: { ...env(), GONG_ACCESS_KEY: undefined, GONG_ACCESS_KEY_SECRET: undefined },
+      responses: [{ body: { requestId: 'r', workspaces: [] } }],
+    });
+    expect(run.exitCode).toBe(0);
+    expect(run.requests[0]?.headers.authorization).toBe(
+      `Basic ${Buffer.from('flag-key:flag-secret').toString('base64')}`,
+    );
+  });
 });

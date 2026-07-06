@@ -48,7 +48,9 @@ Create an access key and secret on Gong's API settings page, then use any of
 | Environment | `GONG_ACCESS_KEY`, `GONG_ACCESS_KEY_SECRET`, `GONG_BEARER_TOKEN` |
 | Config file | `gong config set access-key <key>` → `~/.config/gong/config.json` |
 
-`gong auth check` verifies credentials with a single API call. OAuth users pass their
+The config file is plain JSON ([sample](docs/config.example.json)); point at an
+alternative file with `--config <path>` or `GONG_CONFIG`. Use `bearerToken` instead of
+the key pair for OAuth. `gong auth check` verifies credentials with a single API call. OAuth users pass their
 token via `--bearer-token`/`GONG_BEARER_TOKEN` and set the base URL Gong issued them
 (`GONG_BASE_URL` or `gong config set base-url`).
 

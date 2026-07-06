@@ -35,7 +35,8 @@ Resolution precedence: **flags > environment > config file**.
 | Config file | `accessKey` | `accessKeySecret` | `bearerToken` | `baseUrl` |
 
 - Config file: `$XDG_CONFIG_HOME/gong/config.json` (default `~/.config/gong/config.json`),
-  path overridable with `GONG_CONFIG`. Managed by `gong config set|get|unset|list|path`.
+  path overridable with `--config <path>` (wins) or `GONG_CONFIG`. Managed by
+  `gong config set|get|unset|list|path`.
 - If both bearer and key/secret resolve, bearer wins (documented).
 - Default base URL `https://api.gong.io`; customers on dedicated cells override it (Gong shows
   your base URL on the API settings page). OAuth users must set the `api_base_url_for_customer`

@@ -28,21 +28,23 @@ export const registerConfig: GroupRegistrar = (program, ctx) => {
     .description(`set a config value; keys: ${CONFIG_KEYS.join(', ')}`)
     .argument('<key>', `one of: ${CONFIG_KEYS.join(', ')}`)
     .argument('<value>', 'the value to store')
-    .action((key: string, value: string) => {
+    .action(function (this: import('commander').Command, key: string, value: string) {
+      const override = this.opts<{ config?: string }>().config;
       const prop = configKeyToProp(key);
-      const current = loadConfigFile(ctx);
+      const current = loadConfigFile(ctx, override);
       current[prop] = value;
-      saveConfigFile(ctx, current);
-      ctx.stderr.write(`Set ${key} in ${configFilePath(ctx)}\n`);
+      saveConfigFile(ctx, current, override);
+      ctx.stderr.write(`Set ${key} in ${configFilePath(ctx, override)}\n`);
     });
 
   config
     .command('get')
     .description('print a config value (secrets are masked)')
     .argument('<key>', `one of: ${CONFIG_KEYS.join(', ')}`)
-    .action((key: string) => {
+    .action(function (this: import('commander').Command, key: string) {
+      const override = this.opts<{ config?: string }>().config;
       const prop = configKeyToProp(key);
-      const current = loadConfigFile(ctx);
+      const current = loadConfigFile(ctx, override);
       const value = current[prop];
       if (value === undefined) {
         throw new CliError(`Config key '${key}' is not set.`, { exitCode: EXIT.ERROR });
@@ -54,19 +56,20 @@ export const registerConfig: GroupRegistrar = (program, ctx) => {
     .command('unset')
     .description('remove a config value')
     .argument('<key>', `one of: ${CONFIG_KEYS.join(', ')}`)
-    .action((key: string) => {
+    .action(function (this: import('commander').Command, key: string) {
+      const override = this.opts<{ config?: string }>().config;
       const prop = configKeyToProp(key);
-      const current = loadConfigFile(ctx);
+      const current = loadConfigFile(ctx, override);
       delete current[prop];
-      saveConfigFile(ctx, current);
-      ctx.stderr.write(`Unset ${key} in ${configFilePath(ctx)}\n`);
+      saveConfigFile(ctx, current, override);
+      ctx.stderr.write(`Unset ${key} in ${configFilePath(ctx, override)}\n`);
     });
 
   config
     .command('list')
     .description('print the whole config as JSON (secrets are masked)')
-    .action(() => {
-      const current = loadConfigFile(ctx);
+    .action(function (this: import('commander').Command) {
+      const current = loadConfigFile(ctx, this.opts<{ config?: string }>().config);
       const masked: Record<string, unknown> = {};
       for (const [prop, value] of Object.entries(current)) {
         masked[prop] = SECRET_PROPS.has(prop) ? mask(value) : value;
@@ -77,7 +80,7 @@ export const registerConfig: GroupRegistrar = (program, ctx) => {
   config
     .command('path')
     .description('print the config file path')
-    .action(() => {
-      ctx.stdout.write(configFilePath(ctx) + '\n');
+    .action(function (this: import('commander').Command) {
+      ctx.stdout.write(configFilePath(ctx, this.opts<{ config?: string }>().config) + '\n');
     });
 };
