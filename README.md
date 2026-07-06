@@ -37,6 +37,15 @@ gong users list -o json --fields id,emailAddress,firstName,lastName
 gong stats activity aggregate --from 2026-06-01 --to 2026-06-30 --dry-run
 ```
 
+## Agent skill
+
+An [Agent Skill](https://agentskills.io) ships with this repo, teaching coding agents
+the CLI's conventions and recipes. Install it for your agent with:
+
+```bash
+npx skills add oztamir/gong-cli
+```
+
 ## Authentication
 
 Create an access key and secret on Gong's API settings page, then use any of
